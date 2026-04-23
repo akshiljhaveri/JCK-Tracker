@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JCK Las Vegas — Show Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D98A;
+    --gold-pale: #FBF5E6;
+    --ink: #1A1712;
+    --ink-soft: #4A4540;
+    --ink-muted: #8A837A;
+    --surface: #FFFFFF;
+    --surface-warm: #FAF8F4;
+    --surface-mid: #F2EDE3;
+    --border: #E8E0D0;
+    --border-dark: #D0C8B8;
+    --green: #2D6A4F;
+    --green-bg: #EAF4EE;
+    --red: #8B2020;
+    --red-bg: #FAEAEA;
+    --blue: #1B4D8E;
+    --blue-bg: #EBF2FB;
+    --amber-bg: #FEF3DC;
+    --amber: #92600A;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface-warm);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--ink);
+    color: white;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--gold-light);
+  }
+  .app-header .year-badge {
+    font-size: 11px;
+    background: var(--gold);
+    color: var(--ink);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .save-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    background: var(--ink);
+    color: var(--gold-light);
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .save-toast.show { opacity: 1; }
+
+  /* NAV TABS */
+  .nav-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+  }
+  .nav-wrap::-webkit-scrollbar { display: none; }
+  .nav-tabs {
+    display: flex;
+    padding: 0 12px;
+    gap: 0;
+    white-space: nowrap;
+    min-width: max-content;
+  }
+  .tab-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 14px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .tab-btn:hover { color: var(--ink-soft); }
+  .tab-btn.active { color: var(--ink); font-weight: 500; border-bottom-color: var(--gold); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* SECTION HEADER */
+  .sec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .sec-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dark);
+    background: var(--surface);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--surface-mid); }
+  .btn-gold {
+    background: var(--ink);
+    color: var(--gold-light);
+    border-color: var(--ink);
+  }
+  .btn-gold:hover { background: #2d2820; }
+  .btn-xs {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 6px;
+  }
+  .btn-danger { color: var(--red); border-color: #e8c8c8; }
+  .btn-danger:hover { background: var(--red-bg); }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .card-empty {
+    background: var(--surface-warm);
+    border: 1px dashed var(--border-dark);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 6px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .badge-todo { background: var(--amber-bg); color: var(--amber); }
+  .badge-sent { background: var(--blue-bg); color: var(--blue); }
+  .badge-done { background: var(--green-bg); color: var(--green); }
+  .badge-neutral { background: var(--surface-mid); color: var(--ink-soft); }
+  .badge-purple { background: #F0EEFF; color: #4B2EBF; }
+  .badge-pink { background: #FEF0F5; color: #8B2050; }
+
+  /* MEETING CARD */
+  .meeting-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 10px; }
+  .meeting-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .meeting-company { font-weight: 500; font-size: 15px; }
+  .meeting-meta { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
+  .meeting-notes { font-size: 13px; color: var(--ink-soft); margin-top: 10px; line-height: 1.5; padding-top: 10px; border-top: 1px solid var(--border); }
+  .meeting-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .badge-row { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* TODO */
+  .todo-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .todo-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--border-dark);
+    border-radius: 5px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .check-box.checked { background: var(--green); border-color: var(--green); }
+  .check-box.checked::after { content: ''; width: 11px; height: 7px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); display: block; }
+  .todo-body { flex: 1; }
+  .todo-text { font-size: 14px; line-height: 1.4; }
+  .todo-text.done { text-decoration: line-through; color: var(--ink-muted); }
+  .todo-from { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* CALENDAR */
+  .event-row { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .event-row:last-child { border-bottom: none; }
+  .event-datebox { min-width: 44px; text-align: center; background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 6px 4px; }
+  .event-month { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold); font-weight: 500; }
+  .event-day { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); line-height: 1.1; }
+  .event-info { flex: 1; }
+  .event-name { font-size: 14px; font-weight: 500; }
+  .event-detail { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* COSTS */
+  .cost-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-desc { color: var(--ink-muted); font-size: 12px; }
+  .cost-total-row { display: flex; justify-content: space-between; font-family: 'DM Serif Display', serif; font-size: 18px; padding-top: 12px; border-top: 2px solid var(--border-dark); margin-top: 4px; }
+
+  /* FREIGHT */
+  .freight-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .freight-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); font-weight: 500; padding: 0 0 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  .freight-table td { padding: 10px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .freight-table tr:last-child td { border-bottom: none; }
+
+  /* PREP */
+  .prep-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .prep-item:last-child { border-bottom: none; }
+  .prep-body { flex: 1; }
+  .prep-text { font-size: 14px; }
+  .prep-text.done { text-decoration: line-through; color: var(--ink-muted); }
+  .prep-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(26,23,18,0.55);
+    z-index: 500;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-close { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink-muted); line-height: 1; padding: 0 2px; }
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); display: block; margin-bottom: 5px; font-weight: 500; }
+  .form-input {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  textarea.form-input { min-height: 90px; resize: vertical; }
+  .chip-set { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .chip {
+    font-size: 12px; padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-dark);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .chip.sel { background: var(--ink); color: var(--gold-light); border-color: var(--ink); }
+  .btn-full { width: 100%; padding: 12px; font-size: 15px; border-radius: var(--radius); margin-top: 6px; }
+
+  /* LOADING */
+  .app-loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 60vh; gap: 16px; color: var(--ink-muted);
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CONFIG BANNER */
+  .config-banner {
+    background: var(--amber-bg);
+    border: 1px solid #E8C87A;
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--amber);
+    line-height: 1.6;
+  }
+  .config-banner strong { font-weight: 500; }
+  .config-banner code { background: #FEE9AA; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+
+  @media (max-width: 480px) {
+    .screen { padding: 16px; }
+    .stats-grid { gap: 8px; }
+    .stat-value { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>JCK Las Vegas</h1>
+  <span class="year-badge" id="year-badge">2025</span>
+</header>
+
+<div class="nav-wrap">
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="showTab('meetings')">Meetings</button>
+    <button class="tab-btn" onclick="showTab('todos')">To-Dos</button>
+    <button class="tab-btn" onclick="showTab('calendar')">Calendar</button>
+    <button class="tab-btn" onclick="showTab('costs')">Costs</button>
+    <button class="tab-btn" onclick="showTab('dining')">Dining</button>
+    <button class="tab-btn" onclick="showTab('resorts')">Resorts</button>
+    <button class="tab-btn" onclick="showTab('freight')">Freight</button>
+    <button class="tab-btn" onclick="showTab('prep')">Prep</button>
+  </div>
+</div>
+
+<div id="screen-dashboard" class="screen active">
+  <div id="config-banner-area"></div>
+  <div id="loading-area" class="app-loading"><div class="spinner"></div><span>Loading your data…</span></div>
+  <div id="dashboard-content" style="display:none">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Meetings</div><div class="stat-value" id="s-meetings">0</div></div>
+      <div class="stat-card"><div class="stat-label">Open to-dos</div><div class="stat-value" id="s-todos">0</div></div>
+      <div class="stat-card"><div class="stat-label">Emails sent</div><div class="stat-value" id="s-emails">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total costs</div><div class="stat-value" id="s-costs">$0</div></div>
+    </div>
+    <div style="margin-bottom:8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);font-weight:500">Needs attention</div>
+    <div id="dash-attention"></div>
+    <div style="margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);font-weight:500">Recent meetings</div>
+    <div id="dash-recent"></div>
+  </div>
+</div>
+
+<div id="screen-meetings" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Meetings</span>
+    <button class="btn btn-gold" onclick="openModal('modal-meeting')">+ Add meeting</button>
+  </div>
+  <div id="meetings-list"></div>
+</div>
+
+<div id="screen-todos" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">To-Do List</span>
+    <button class="btn btn-gold" onclick="openModal('modal-todo')">+ Add task</button>
+  </div>
+  <div class="card" id="todos-list"></div>
+</div>
+
+<div id="screen-calendar" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Event Calendar</span>
+    <button class="btn btn-gold" onclick="openModal('modal-event')">+ Add event</button>
+  </div>
+  <div class="card" id="events-list"></div>
+</div>
+
+<div id="screen-costs" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Total Costs</span>
+    <button class="btn btn-gold" onclick="openModal('modal-cost')">+ Add cost</button>
+  </div>
+  <div class="card" id="costs-list"></div>
+</div>
+
+<div id="screen-dining" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Restaurant Reservations</span>
+    <button class="btn btn-gold" onclick="openModal('modal-rest')">+ Add reservation</button>
+  </div>
+  <div id="dining-list"></div>
+</div>
+
+<div id="screen-resorts" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Resorts / Events / Badges</span>
+    <button class="btn btn-gold" onclick="openModal('modal-resort')">+ Add item</button>
+  </div>
+  <div id="resorts-list"></div>
+</div>
+
+<div id="screen-freight" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Freight Comparison</span>
+    <button class="btn btn-gold" onclick="openModal('modal-freight')">+ Add carrier</button>
+  </div>
+  <div class="card">
+    <table class="freight-table">
+      <thead><tr><th>Carrier</th><th>Est. Cost</th><th>Transit</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="freight-list"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="screen-prep" class="screen">
+  <div class="sec-header">
+    <span class="sec-title">Show Prep</span>
+    <button class="btn btn-gold" onclick="openModal('modal-prep')">+ Add item</button>
+  </div>
+  <div class="card" id="prep-list"></div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<div class="modal-overlay" id="modal-meeting">
+  <div class="modal-sheet">
+    <div class="modal-title">Add meeting <button class="modal-close" onclick="closeModal('modal-meeting')">×</button></div>
+    <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="m-date"></div>
+    <div class="form-row"><label class="form-label">Type</label>
+      <div class="chip-set">
+        <button class="chip sel" onclick="pickChip(this,'m-type')">Meeting</button>
+        <button class="chip" onclick="pickChip(this,'m-type')">Call</button>
+        <button class="chip" onclick="pickChip(this,'m-type')">Email</button>
+        <button class="chip" onclick="pickChip(this,'m-type')">Demo</button>
+      </div><input type="hidden" id="m-type" value="Meeting">
+    </div>
+    <div class="form-row"><label class="form-label">Customer / Company</label><input class="form-input" type="text" id="m-customer" placeholder="Company name"></div>
+    <div class="form-row"><label class="form-label">Point of Contact</label><input class="form-input" type="text" id="m-poc" placeholder="Name & title"></div>
+    <div class="form-row"><label class="form-label">Who took the meeting?</label><input class="form-input" type="text" id="m-who" placeholder="Team member"></div>
+    <div class="form-row"><label class="form-label">Notes & initial follow-up</label><textarea class="form-input" id="m-notes" placeholder="Key points, action items…"></textarea></div>
+    <div class="form-row"><label class="form-label">Emails sent?</label>
+      <div class="chip-set">
+        <button class="chip" onclick="pickChip(this,'m-emails')">None</button>
+        <button class="chip sel" onclick="pickChip(this,'m-emails')">Summary sent</button>
+        <button class="chip" onclick="pickChip(this,'m-emails')">Follow-up sent</button>
+      </div><input type="hidden" id="m-emails" value="Summary sent">
+    </div>
+    <div class="form-row"><label class="form-label">Status</label>
+      <div class="chip-set">
+        <button class="chip sel" onclick="pickChip(this,'m-status')">To-do</button>
+        <button class="chip" onclick="pickChip(this,'m-status')">Email sent</button>
+        <button class="chip" onclick="pickChip(this,'m-status')">Follow-up done</button>
+      </div><input type="hidden" id="m-status" value="To-do">
+    </div>
+    <button class="btn btn-gold btn-full" onclick="saveMeeting()">Save meeting</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-todo">
+  <div class="modal-sheet">
+    <div class="modal-title">Add to-do <button class="modal-close" onclick="closeModal('modal-todo')">×</button></div>
+    <div class="form-row"><label class="form-label">Task</label><textarea class="form-input" id="t-text" placeholder="What needs to be done?"></textarea></div>
+    <div class="form-row"><label class="form-label">From (optional)</label><input class="form-input" type="text" id="t-from" placeholder="Customer or context"></div>
+    <button class="btn btn-gold btn-full" onclick="saveTodo()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-event">
+  <div class="modal-sheet">
+    <div class="modal-title">Add event <button class="modal-close" onclick="closeModal('modal-event')">×</button></div>
+    <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="e-date"></div>
+    <div class="form-row"><label class="form-label">Event name</label><input class="form-input" type="text" id="e-title" placeholder="e.g. JCK Opens, Welcome Reception"></div>
+    <div class="form-row"><label class="form-label">Details / location</label><input class="form-input" type="text" id="e-detail" placeholder="Venue, time, notes"></div>
+    <button class="btn btn-gold btn-full" onclick="saveEvent()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cost">
+  <div class="modal-sheet">
+    <div class="modal-title">Add cost <button class="modal-close" onclick="closeModal('modal-cost')">×</button></div>
+    <div class="form-row"><label class="form-label">Category</label><input class="form-input" type="text" id="c-cat" placeholder="e.g. Booth, Travel, Supplies"></div>
+    <div class="form-row"><label class="form-label">Description</label><input class="form-input" type="text" id="c-desc" placeholder="Details"></div>
+    <div class="form-row"><label class="form-label">Amount ($)</label><input class="form-input" type="number" id="c-amt" placeholder="0.00"></div>
+    <button class="btn btn-gold btn-full" onclick="saveCost()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-rest">
+  <div class="modal-sheet">
+    <div class="modal-title">Add reservation <button class="modal-close" onclick="closeModal('modal-rest')">×</button></div>
+    <div class="form-row"><label class="form-label">Restaurant</label><input class="form-input" type="text" id="r-name" placeholder="Name"></div>
+    <div class="form-row"><label class="form-label">Date & time</label><input class="form-input" type="text" id="r-dt" placeholder="e.g. June 6 @ 7:30pm"></div>
+    <div class="form-row"><label class="form-label">Party size</label><input class="form-input" type="number" id="r-size" placeholder="# guests"></div>
+    <div class="form-row"><label class="form-label">Confirmation / notes</label><input class="form-input" type="text" id="r-notes" placeholder="Conf #, who's attending…"></div>
+    <button class="btn btn-gold btn-full" onclick="saveRest()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-resort">
+  <div class="modal-sheet">
+    <div class="modal-title">Add item <button class="modal-close" onclick="closeModal('modal-resort')">×</button></div>
+    <div class="form-row"><label class="form-label">Type</label>
+      <div class="chip-set">
+        <button class="chip sel" onclick="pickChip(this,'rs-type')">Resort</button>
+        <button class="chip" onclick="pickChip(this,'rs-type')">Event</button>
+        <button class="chip" onclick="pickChip(this,'rs-type')">Badge</button>
+      </div><input type="hidden" id="rs-type" value="Resort">
+    </div>
+    <div class="form-row"><label class="form-label">Name</label><input class="form-input" type="text" id="rs-name" placeholder="Property, event, or badge name"></div>
+    <div class="form-row"><label class="form-label">Dates / details</label><input class="form-input" type="text" id="rs-detail" placeholder="Check-in/out, person, dates…"></div>
+    <div class="form-row"><label class="form-label">Cost ($)</label><input class="form-input" type="number" id="rs-cost" placeholder="0"></div>
+    <div class="form-row"><label class="form-label">Notes</label><input class="form-input" type="text" id="rs-notes" placeholder="Confirmation #, notes…"></div>
+    <button class="btn btn-gold btn-full" onclick="saveResort()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-freight">
+  <div class="modal-sheet">
+    <div class="modal-title">Add carrier <button class="modal-close" onclick="closeModal('modal-freight')">×</button></div>
+    <div class="form-row"><label class="form-label">Carrier</label><input class="form-input" type="text" id="f-carrier" placeholder="e.g. FedEx, UPS, Freeman"></div>
+    <div class="form-row"><label class="form-label">Estimated cost ($)</label><input class="form-input" type="number" id="f-cost" placeholder="0"></div>
+    <div class="form-row"><label class="form-label">Transit time</label><input class="form-input" type="text" id="f-transit" placeholder="e.g. 3 days"></div>
+    <div class="form-row"><label class="form-label">Notes</label><input class="form-input" type="text" id="f-notes" placeholder="Weight limits, contact, deadlines…"></div>
+    <button class="btn btn-gold btn-full" onclick="saveFreight()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-prep">
+  <div class="modal-sheet">
+    <div class="modal-title">Add prep item <button class="modal-close" onclick="closeModal('modal-prep')">×</button></div>
+    <div class="form-row"><label class="form-label">Item</label><input class="form-input" type="text" id="p-item" placeholder="e.g. Order business cards"></div>
+    <div class="form-row"><label class="form-label">Category</label>
+      <div class="chip-set">
+        <button class="chip sel" onclick="pickChip(this,'p-cat')">Office supplies</button>
+        <button class="chip" onclick="pickChip(this,'p-cat')">Jewelry displays</button>
+        <button class="chip" onclick="pickChip(this,'p-cat')">Booth setup</button>
+        <button class="chip" onclick="pickChip(this,'p-cat')">Shipping</button>
+        <button class="chip" onclick="pickChip(this,'p-cat')">Other</button>
+      </div><input type="hidden" id="p-cat" value="Office supplies">
+    </div>
+    <div class="form-row"><label class="form-label">Notes</label><input class="form-input" type="text" id="p-notes" placeholder="Quantity, vendor, deadline…"></div>
+    <button class="btn btn-gold btn-full" onclick="savePrep()">Save</button>
+  </div>
+</div>
+
+<div class="save-toast" id="save-toast">Saved</div>
+
+<!-- ===== FIREBASE ===== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ─────────────────────────────────────────────
+  // STEP 1: Paste your Firebase config here
+  // Get this from: Firebase Console → Project Settings → Your apps → Web app
+  // ─────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_rXD9Zr-5dyb4vwfULry5zW_IV38a-VY",
+    authDomain: "jck-tracker.firebaseapp.com",
+    projectId: "jck-tracker",
+    storageBucket: "jck-tracker.firebasestorage.app",
+    messagingSenderId: "846798969633",
+    appId: "1:846798969633:web:46695f79f386404b8afc60",
+    measurementId: "G-6BF6HBNLTK"
+  };
+
+  // ─────────────────────────────────────────────
+  // STEP 2: Set a name for this show year's data
+  // Change this each year to start fresh, or keep
+  // the same to continue from last year.
+  // ─────────────────────────────────────────────
+  const SHOW_YEAR = "2025";
+
+  document.getElementById('year-badge').textContent = SHOW_YEAR;
+
+  const COLLECTIONS = ['meetings','todos','events','costs','restaurants','resorts','freight','prep'];
+
+  let db, state = {};
+  COLLECTIONS.forEach(k => state[k] = []);
+
+  const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+
+  if (!isConfigured) {
+    document.getElementById('config-banner-area').innerHTML = `
+      <div class="config-banner">
+        <strong>Setup needed:</strong> Open <code>index.html</code> and replace the Firebase config values
+        (around line 380) with the ones from your Firebase project. Then push to GitHub — data will save permanently.
+      </div>`;
+    document.getElementById('loading-area').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    renderAll();
+  } else {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    loadAll();
+  }
+
+  async function loadAll() {
+    try {
+      for (const key of COLLECTIONS) {
+        const ref = doc(db, 'jck_show', `${SHOW_YEAR}_${key}`);
+        const snap = await getDoc(ref);
+        if (snap.exists()) state[key] = snap.data().items || [];
+      }
+    } catch(e) {
+      console.error('Firebase load error:', e);
+    }
+    document.getElementById('loading-area').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    renderAll();
+  }
+
+  async function persist(key) {
+    if (!db) return;
+    try {
+      const ref = doc(db, 'jck_show', `${SHOW_YEAR}_${key}`);
+      await setDoc(ref, { items: state[key] });
+      showToast();
+    } catch(e) {
+      console.error('Save error:', e);
+    }
+  }
+
+  function showToast() {
+    const t = document.getElementById('save-toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  // ─── RENDER ─────────────────────────────────
+
+  function renderAll() {
+    renderDashboard();
+    renderMeetings();
+    renderTodos();
+    renderCalendar();
+    renderCosts();
+    renderDining();
+    renderResorts();
+    renderFreight();
+    renderPrep();
+  }
+  window.renderAll = renderAll;
+  window.state = state;
+  window.persist = persist;
+
+  function renderDashboard() {
+    const openTodos = state.todos.filter(t => !t.done).length;
+    const sentEmails = state.meetings.filter(m => m.status === 'Email sent' || m.status === 'Follow-up done').length;
+    const totalCost = state.costs.reduce((a, c) => a + Number(c.amt || 0), 0);
+    document.getElementById('s-meetings').textContent = state.meetings.length;
+    document.getElementById('s-todos').textContent = openTodos;
+    document.getElementById('s-emails').textContent = sentEmails;
+    document.getElementById('s-costs').textContent = '$' + totalCost.toLocaleString();
+
+    const attn = state.meetings.filter(m => m.status === 'To-do');
+    document.getElementById('dash-attention').innerHTML = attn.length
+      ? attn.map(m => `<div class="card" style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="meeting-company">${esc(m.customer)}</div>
+            <div class="meeting-meta">${esc(m.poc)} · ${esc(m.who)} · ${esc(m.date)}</div></div>
+            ${statusBadge(m.status)}
+          </div></div>`).join('')
+      : '<div class="card-empty">All caught up!</div>';
+
+    const recent = [...state.meetings].slice(-3).reverse();
+    document.getElementById('dash-recent').innerHTML = recent.length
+      ? recent.map(m => `<div class="card" style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div class="meeting-company">${esc(m.customer)}</div>
+            <div class="meeting-meta">${esc(m.poc)} · ${esc(m.date)}</div></div>
+            ${typeBadge(m.type)}
+          </div></div>`).join('')
+      : '<div class="card-empty">No meetings yet.</div>';
+  }
+
+  function renderMeetings() {
+    document.getElementById('meetings-list').innerHTML = state.meetings.length
+      ? state.meetings.map((m, i) => `
+        <div class="meeting-card">
+          <div class="meeting-top">
+            <div>
+              <div class="meeting-company">${esc(m.customer)}</div>
+              <div class="meeting-meta">${esc(m.poc)} · ${esc(m.who)} · ${esc(m.date)}</div>
+            </div>
+            <div class="badge-row">${typeBadge(m.type)} ${statusBadge(m.status)}</div>
+          </div>
+          ${m.notes ? `<div class="meeting-notes">${esc(m.notes)}</div>` : ''}
+          <div class="meeting-actions">
+            <button class="btn btn-xs" onclick="cycleStatus(${i})">Change status</button>
+            <button class="btn btn-xs btn-danger" onclick="deleteItem('meetings',${i})">Remove</button>
+          </div>
+        </div>`).join('')
+      : '<div class="card-empty">No meetings yet. Tap "+ Add meeting" to get started.</div>';
+  }
+
+  function renderTodos() {
+    const open = state.todos.filter(t => !t.done);
+    const done = state.todos.filter(t => t.done);
+    const all = [...open, ...done];
+    document.getElementById('todos-list').innerHTML = all.length
+      ? all.map(t => { const i = state.todos.indexOf(t); return `
+        <div class="todo-item">
+          <div class="check-box${t.done ? ' checked' : ''}" onclick="toggleTodo(${i})"></div>
+          <div class="todo-body">
+            <div class="todo-text${t.done ? ' done' : ''}">${esc(t.text)}</div>
+            ${t.from ? `<div class="todo-from">${esc(t.from)}</div>` : ''}
+          </div>
+          <button class="btn btn-xs btn-danger" onclick="deleteItem('todos',${i})">×</button>
+        </div>`; }).join('')
+      : '<div style="color:var(--ink-muted);font-size:14px;padding:8px 0">No to-dos yet.</div>';
+  }
+
+  function renderCalendar() {
+    const sorted = [...state.events].sort((a, b) => a.date.localeCompare(b.date));
+    document.getElementById('events-list').innerHTML = sorted.length
+      ? sorted.map((e, i) => {
+          const d = new Date(e.date + 'T00:00:00');
+          const mo = d.toLocaleString('en', { month: 'short' }).toUpperCase();
+          const dy = d.getDate();
+          return `<div class="event-row">
+            <div class="event-datebox"><div class="event-month">${mo}</div><div class="event-day">${dy}</div></div>
+            <div class="event-info">
+              <div class="event-name">${esc(e.title)}</div>
+              <div class="event-detail">${esc(e.detail)}</div>
+            </div>
+            <button class="btn btn-xs btn-danger" onclick="deleteItem('events',${state.events.indexOf(e)})">×</button>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--ink-muted);font-size:14px;padding:8px 0">No events yet.</div>';
+  }
+
+  function renderCosts() {
+    const total = state.costs.reduce((a, c) => a + Number(c.amt || 0), 0);
+    document.getElementById('costs-list').innerHTML = (state.costs.length
+      ? state.costs.map((c, i) => `
+        <div class="cost-row">
+          <div><div>${esc(c.cat)}</div><div class="cost-desc">${esc(c.desc)}</div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:500">$${Number(c.amt).toLocaleString()}</span>
+            <button class="btn btn-xs btn-danger" onclick="deleteItem('costs',${i})">×</button>
+          </div>
+        </div>`).join('')
+      : '<div style="color:var(--ink-muted);font-size:14px;padding:8px 0">No costs yet.</div>')
+      + (state.costs.length ? `<div class="cost-total-row"><span>Total</span><span>$${total.toLocaleString()}</span></div>` : '');
+  }
+
+  function renderDining() {
+    document.getElementById('dining-list').innerHTML = state.restaurants.length
+      ? state.restaurants.map((r, i) => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-weight:500;font-size:15px">${esc(r.name)}</div>
+              <div style="font-size:13px;color:var(--ink-muted);margin-top:3px">${esc(r.dt)}</div>
+              ${r.notes ? `<div style="font-size:13px;color:var(--ink-soft);margin-top:4px">${esc(r.notes)}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+              <span class="badge badge-neutral">${r.size || 0} guests</span>
+              <button class="btn btn-xs btn-danger" onclick="deleteItem('restaurants',${i})">Remove</button>
+            </div>
+          </div>
+        </div>`).join('')
+      : '<div class="card-empty">No reservations yet.</div>';
+  }
+
+  function renderResorts() {
+    document.getElementById('resorts-list').innerHTML = state.resorts.length
+      ? state.resorts.map((r, i) => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-weight:500;font-size:15px">${esc(r.name)}</div>
+              <div style="font-size:13px;color:var(--ink-muted);margin-top:3px">${esc(r.detail)}</div>
+              ${r.cost ? `<div style="font-size:13px;font-weight:500;margin-top:4px">$${Number(r.cost).toLocaleString()}</div>` : ''}
+              ${r.notes ? `<div style="font-size:12px;color:var(--ink-muted);margin-top:2px">${esc(r.notes)}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+              ${resortBadge(r.type)}
+              <button class="btn btn-xs btn-danger" onclick="deleteItem('resorts',${i})">Remove</button>
+            </div>
+          </div>
+        </div>`).join('')
+      : '<div class="card-empty">No resorts, events, or badges yet.</div>';
+  }
+
+  function renderFreight() {
+    document.getElementById('freight-list').innerHTML = state.freight.length
+      ? state.freight.map((f, i) => `
+        <tr>
+          <td style="font-weight:500">${esc(f.carrier)}</td>
+          <td>$${Number(f.cost).toLocaleString()}</td>
+          <td>${esc(f.transit)}</td>
+          <td style="color:var(--ink-muted)">${esc(f.notes)}</td>
+          <td><button class="btn btn-xs btn-danger" onclick="deleteItem('freight',${i})">×</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="color:var(--ink-muted);font-size:13px;padding:12px 0">No carriers yet.</td></tr>';
+  }
+
+  function renderPrep() {
+    document.getElementById('prep-list').innerHTML = state.prep.length
+      ? state.prep.map((p, i) => `
+        <div class="prep-item">
+          <div class="check-box${p.done ? ' checked' : ''}" onclick="togglePrep(${i})"></div>
+          <div class="prep-body">
+            <div class="prep-text${p.done ? ' done' : ''}">${esc(p.item)}</div>
+            <div class="prep-sub">${esc(p.cat)}${p.notes ? ' · ' + esc(p.notes) : ''}</div>
+          </div>
+          <button class="btn btn-xs btn-danger" onclick="deleteItem('prep',${i})">×</button>
+        </div>`).join('')
+      : '<div style="color:var(--ink-muted);font-size:14px;padding:8px 0">No prep items yet.</div>';
+  }
+
+  // ─── HELPERS ────────────────────────────────
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function statusBadge(s) {
+    if (s === 'To-do') return '<span class="badge badge-todo">To-do</span>';
+    if (s === 'Email sent') return '<span class="badge badge-sent">Email sent</span>';
+    if (s === 'Follow-up done') return '<span class="badge badge-done">Done</span>';
+    return `<span class="badge badge-neutral">${esc(s)}</span>`;
+  }
+
+  function typeBadge(t) {
+    if (t === 'Call') return '<span class="badge badge-purple">Call</span>';
+    if (t === 'Email') return '<span class="badge badge-pink">Email</span>';
+    if (t === 'Demo') return '<span class="badge badge-sent">Demo</span>';
+    return '<span class="badge badge-neutral">Meeting</span>';
+  }
+
+  function resortBadge(t) {
+    if (t === 'Badge') return '<span class="badge badge-sent">Badge</span>';
+    if (t === 'Event') return '<span class="badge badge-purple">Event</span>';
+    return '<span class="badge badge-neutral">Resort</span>';
+  }
+
+  // ─── ACTIONS ────────────────────────────────
+
+  window.cycleStatus = function(i) {
+    const s = ['To-do','Email sent','Follow-up done'];
+    state.meetings[i].status = s[(s.indexOf(state.meetings[i].status) + 1) % s.length];
+    persist('meetings'); renderAll();
+  };
+
+  window.toggleTodo = function(i) {
+    state.todos[i].done = !state.todos[i].done;
+    persist('todos'); renderAll();
+  };
+
+  window.togglePrep = function(i) {
+    state.prep[i].done = !state.prep[i].done;
+    persist('prep'); renderAll();
+  };
+
+  window.deleteItem = function(key, i) {
+    state[key].splice(i, 1);
+    persist(key); renderAll();
+  };
+
+  // ─── SAVE FUNCTIONS ─────────────────────────
+
+  window.saveMeeting = function() {
+    state.meetings.push({
+      date: document.getElementById('m-date').value,
+      type: document.getElementById('m-type').value,
+      customer: document.getElementById('m-customer').value,
+      poc: document.getElementById('m-poc').value,
+      who: document.getElementById('m-who').value,
+      notes: document.getElementById('m-notes').value,
+      emails: document.getElementById('m-emails').value,
+      status: document.getElementById('m-status').value
+    });
+    ['m-date','m-customer','m-poc','m-who','m-notes'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-meeting'); persist('meetings'); renderAll();
+  };
+
+  window.saveTodo = function() {
+    const text = document.getElementById('t-text').value.trim();
+    if (!text) return;
+    state.todos.push({ text, from: document.getElementById('t-from').value, done: false });
+    document.getElementById('t-text').value = ''; document.getElementById('t-from').value = '';
+    closeModal('modal-todo'); persist('todos'); renderAll();
+  };
+
+  window.saveEvent = function() {
+    state.events.push({ date: document.getElementById('e-date').value, title: document.getElementById('e-title').value, detail: document.getElementById('e-detail').value });
+    ['e-date','e-title','e-detail'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-event'); persist('events'); renderAll();
+  };
+
+  window.saveCost = function() {
+    state.costs.push({ cat: document.getElementById('c-cat').value, desc: document.getElementById('c-desc').value, amt: Number(document.getElementById('c-amt').value) || 0 });
+    ['c-cat','c-desc','c-amt'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-cost'); persist('costs'); renderAll();
+  };
+
+  window.saveRest = function() {
+    state.restaurants.push({ name: document.getElementById('r-name').value, dt: document.getElementById('r-dt').value, size: Number(document.getElementById('r-size').value) || 0, notes: document.getElementById('r-notes').value });
+    ['r-name','r-dt','r-size','r-notes'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-rest'); persist('restaurants'); renderAll();
+  };
+
+  window.saveResort = function() {
+    state.resorts.push({ type: document.getElementById('rs-type').value, name: document.getElementById('rs-name').value, detail: document.getElementById('rs-detail').value, cost: Number(document.getElementById('rs-cost').value) || 0, notes: document.getElementById('rs-notes').value });
+    ['rs-name','rs-detail','rs-cost','rs-notes'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-resort'); persist('resorts'); renderAll();
+  };
+
+  window.saveFreight = function() {
+    state.freight.push({ carrier: document.getElementById('f-carrier').value, cost: Number(document.getElementById('f-cost').value) || 0, transit: document.getElementById('f-transit').value, notes: document.getElementById('f-notes').value });
+    ['f-carrier','f-cost','f-transit','f-notes'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-freight'); persist('freight'); renderAll();
+  };
+
+  window.savePrep = function() {
+    state.prep.push({ item: document.getElementById('p-item').value, cat: document.getElementById('p-cat').value, notes: document.getElementById('p-notes').value, done: false });
+    ['p-item','p-notes'].forEach(id => document.getElementById(id).value = '');
+    closeModal('modal-prep'); persist('prep'); renderAll();
+  };
+
+</script>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    const tabs = ['dashboard','meetings','todos','calendar','costs','dining','resorts','freight','prep'];
+    document.querySelectorAll('.tab-btn')[tabs.indexOf(id)].classList.add('active');
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function pickChip(btn, hiddenId) {
+    btn.closest('.chip-set').querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.getElementById(hiddenId).value = btn.textContent.trim();
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+  });
+</script>
+
+</body>
+</html>
